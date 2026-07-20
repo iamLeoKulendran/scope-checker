@@ -1,0 +1,36 @@
+# Save this file as .github/workflows/check-scope.yml in a (private) GitHub repo
+# containing check_scope.py. GitHub runs it on their servers on this schedule —
+# your own computer doesn't need to be on.
+#
+# Cron field order: minute  hour  day-of-month  month  day-of-week  (all in UTC!)
+# Sri Lanka is UTC+5:30, so subtract 5:30 from the local time you want.
+
+name: Check Scope Cinemas availability
+
+on:
+  schedule:
+    # Every 10 minutes, around the clock.
+    # NOTE: on a PRIVATE repo this uses your free 2,000 Actions minutes/month.
+    # At ~1.5 min per run, every 10 min = ~216 min/day, so budget lasts ~9 days.
+    # Use a PUBLIC repo instead if you want unlimited free minutes for this whole check.
+    - cron: "*/10 * * * *"
+
+  workflow_dispatch: {}   # lets you also trigger it manually from the Actions tab
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install playwright
+          playwright install chromium --with-deps
+
+      - name: Run checker
+        run: python3 check_scope.py
