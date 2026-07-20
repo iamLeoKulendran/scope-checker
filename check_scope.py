@@ -21,7 +21,9 @@ import urllib.request
 # ---- CONFIG: edit these ----
 MOVIE_URL = "https://www.scopecinemas.com/movies/the-odyssey/showtimes"
 TARGET_DATE_LABEL = "Jul25"          # as it appears on the date tabs, e.g. "Jul25Sat"
-NTFY_TOPIC = "scope-odyssey-jul25-xy9k"  # make this random/unique - anyone who knows it can read your notifications
+
+# ntfy is optional - leave as None to skip it and use Telegram only.
+NTFY_TOPIC = None  # e.g. "scope-odyssey-jul25-xy9k" - set this to enable ntfy
 
 # Telegram is optional - leave these as None to skip it and use ntfy only.
 # Set as GitHub repo Secrets (never hardcode a real token in the file itself).
@@ -36,13 +38,20 @@ def page_contains_target_date() -> bool:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page()
-        page.goto(MOVIE_URL, wait_until="networkidle", timeout=30000)
+        # "load" fires once and reliably; "networkidle" can hang forever on sites
+        # with persistent background connections (analytics, chat widgets, etc).
+        page.goto(MOVIE_URL, wait_until="load", timeout=45000)
+        # The date tabs are rendered client-side after load, so give the JS
+        # a few seconds to finish before reading the page content.
+        page.wait_for_timeout(5000)
         content = page.content()
         browser.close()
         return TARGET_DATE_LABEL in content
 
 
 def notify_ntfy(message: str) -> None:
+    if not NTFY_TOPIC:
+        return  # ntfy not configured - skip silently
     req = urllib.request.Request(
         url=f"https://ntfy.sh/{NTFY_TOPIC}",
         data=message.encode("utf-8"),
