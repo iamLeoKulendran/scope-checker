@@ -20,7 +20,7 @@ import urllib.request
 
 # ---- CONFIG: edit these ----
 MOVIE_URL = "https://www.scopecinemas.com/movies/the-odyssey/showtimes"
-TARGET_DATE_LABEL = "Jul25"          # as it appears on the date tabs, e.g. "Jul25Sat"
+TARGET_DATE_LABEL = "Jul23"          # as it appears on the date tabs, e.g. "Jul25Sat"
 
 # ntfy is optional - leave as None to skip it and use Telegram only.
 NTFY_TOPIC = None  # e.g. "scope-odyssey-jul25-xy9k" - set this to enable ntfy
