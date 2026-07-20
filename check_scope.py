@@ -13,6 +13,8 @@ Usage:
     python3 check_scope.py
 """
 
+import json
+import os
 import sys
 import urllib.request
 
@@ -20,6 +22,11 @@ import urllib.request
 MOVIE_URL = "https://www.scopecinemas.com/movies/the-odyssey/showtimes"
 TARGET_DATE_LABEL = "Jul25"          # as it appears on the date tabs, e.g. "Jul25Sat"
 NTFY_TOPIC = "scope-odyssey-jul25-xy9k"  # make this random/unique - anyone who knows it can read your notifications
+
+# Telegram is optional - leave these as None to skip it and use ntfy only.
+# Set as GitHub repo Secrets (never hardcode a real token in the file itself).
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 # -----------------------------
 
 
@@ -35,7 +42,7 @@ def page_contains_target_date() -> bool:
         return TARGET_DATE_LABEL in content
 
 
-def notify(message: str) -> None:
+def notify_ntfy(message: str) -> None:
     req = urllib.request.Request(
         url=f"https://ntfy.sh/{NTFY_TOPIC}",
         data=message.encode("utf-8"),
@@ -43,6 +50,22 @@ def notify(message: str) -> None:
         method="POST",
     )
     urllib.request.urlopen(req, timeout=15)
+
+
+def notify_telegram(message: str) -> None:
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        return  # Telegram not configured - skip silently
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = json.dumps({"chat_id": TELEGRAM_CHAT_ID, "text": message}).encode("utf-8")
+    req = urllib.request.Request(
+        url, data=payload, headers={"Content-Type": "application/json"}, method="POST"
+    )
+    urllib.request.urlopen(req, timeout=15)
+
+
+def notify(message: str) -> None:
+    notify_ntfy(message)
+    notify_telegram(message)
 
 
 def main() -> None:
