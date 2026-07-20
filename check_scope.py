@@ -20,7 +20,7 @@ import urllib.request
 
 # ---- CONFIG: edit these ----
 MOVIE_URL = "https://www.scopecinemas.com/movies/the-odyssey/showtimes"
-TARGET_DATE_LABEL = "Jul23"          # as it appears on the date tabs, e.g. "Jul25Sat"
+TARGET_DATE_LABEL = "Jul25"          # as it appears on the date tabs, e.g. "Jul25Sat"
 
 # ntfy is optional - leave as None to skip it and use Telegram only.
 NTFY_TOPIC = None  # e.g. "scope-odyssey-jul25-xy9k" - set this to enable ntfy
@@ -29,6 +29,10 @@ NTFY_TOPIC = None  # e.g. "scope-odyssey-jul25-xy9k" - set this to enable ntfy
 # Set as GitHub repo Secrets (never hardcode a real token in the file itself).
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+
+# Set True temporarily to print the real page text around known weekday
+# markers, so we can see the exact format Scope uses and fix TARGET_DATE_LABEL.
+DEBUG = True
 # -----------------------------
 
 
@@ -44,9 +48,19 @@ def page_contains_target_date() -> bool:
         # The date tabs are rendered client-side after load, so give the JS
         # a few seconds to finish before reading the page content.
         page.wait_for_timeout(5000)
-        content = page.content()
+        text = page.inner_text("body")  # visible text only - more reliable than raw HTML
         browser.close()
-        return TARGET_DATE_LABEL in content
+
+        if DEBUG:
+            print("---- DEBUG: snippet around 'Thu' (should be near today's open dates) ----")
+            idx = text.find("Thu")
+            print(text[max(0, idx - 120): idx + 60] if idx != -1 else "'Thu' not found in page text")
+            print("---- DEBUG: snippet around 'Sat' (relevant once Jul 25 opens) ----")
+            idx2 = text.find("Sat")
+            print(text[max(0, idx2 - 120): idx2 + 60] if idx2 != -1 else "'Sat' not found in page text")
+            print("---------------------------------------------------------------------------")
+
+        return TARGET_DATE_LABEL in text
 
 
 def notify_ntfy(message: str) -> None:
