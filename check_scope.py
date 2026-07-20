@@ -40,7 +40,7 @@ def page_contains_target_date() -> bool:
         page = browser.new_page()
         # "load" fires once and reliably; "networkidle" can hang forever on sites
         # with persistent background connections (analytics, chat widgets, etc).
-        page.goto(MOVIE_URL, wait_until="networkidle", timeout=30000)
+        page.goto(MOVIE_URL, wait_until="load", timeout=45000)
         # The date tabs are rendered client-side after load, so give the JS
         # a few seconds to finish before reading the page content.
         page.wait_for_timeout(5000)
