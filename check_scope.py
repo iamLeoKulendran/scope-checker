@@ -49,9 +49,14 @@ def page_contains_target_date() -> bool:
         # a few seconds to finish before reading the page content.
         page.wait_for_timeout(5000)
         text = page.inner_text("body")  # visible text only - more reliable than raw HTML
+        page.screenshot(path="debug_screenshot.png", full_page=True)
         browser.close()
 
         if DEBUG:
+            print(f"---- DEBUG: total visible text length = {len(text)} chars ----")
+            print("---- DEBUG: first 2000 chars of page text ----")
+            print(text[:2000])
+            print("------------------------------------------------")
             print("---- DEBUG: snippet around 'Thu' (should be near today's open dates) ----")
             idx = text.find("Thu")
             print(text[max(0, idx - 120): idx + 60] if idx != -1 else "'Thu' not found in page text")
